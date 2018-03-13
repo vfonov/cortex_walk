@@ -21,11 +21,6 @@
 #include <minc_io_exceptions.h>
 #include <minc_io_fixed_vector.h>
 
-#ifdef HAVE_MINC1
-#include <minc_1_simple.h>
-
-#endif
-
 #ifndef ITK_REPORT_ERROR
 #define ITK_REPORT_ERROR(MSG) throw itk::ExceptionObject(__FILE__,__LINE__,MSG)
 #endif //ITK_REPORT_ERROR
@@ -37,7 +32,7 @@ namespace minc
     typedef unsigned char minc_mask_voxel;
 
     //! default minc file voxel type
-        typedef float voxel_type;
+    typedef float voxel_type;
 
     //! default minc volume dimension
     const int volume_dimensions = 3;
@@ -278,18 +273,6 @@ namespace minc
     return reader->GetOutput();
     }
 
-    //! set minc file storage type
-    void set_minc_storage_type(itk::Object* image,std::string datatype);
-
-    //! copy metadata
-    void copy_metadata(itk::Object* dst,itk::Object* src);
-
-    //! copy minc dimension order
-    void copy_dimorder(itk::Object* dst,itk::Object* src);
-
-    //! append minc-style history
-    void append_history(itk::Object* dst,const std::string& history);
-
     //! a helper function for minc writing
     template <class T> void save_minc(const char *file,typename T::Pointer img)
     {
@@ -302,65 +285,6 @@ namespace minc
 
     writer->Update();
     } 
-
-    //! calculate volume min and max
-    int get_image_limits(image3d::Pointer, voxel_type &min, voxel_type &max);
-    //! calculate volume min and max
-    int get_image_limits(def3d::Pointer, voxel_type &min, voxel_type &max);
-    //! calculate volume min and max
-    int get_image_limits(mask3d::Pointer img, voxel_type &min,voxel_type &max);
-
-    //! store tags to minc tags file
-    void write_tags(const tag_points& tags, const char * file);
-    //! store two sets of tags to minc tags file
-    void write_2tags(const tag_points& tags,const tag_points& tags2, const char * file);
-
-    //! store tags and labels
-    void write_tags(const tag_points& tags,const std::vector<int>& labels, const char * file);
-    //! store tags and values
-    void write_tags(const tag_points& tags,const std::vector<float>& values, const char * file);
-    //! store tags and values
-    void write_tags(const tag_points& tags,const std::vector<double>& values, const char * file);
-
-
-    //! read tags from the minc tag file
-    void read_tags(tag_points& tags, const char * file,int vol=1);
-
-    //! read tags and labels from minc tag file
-    void read_tags(tag_points& tags, std::vector<int>& labels, const char * file, int vol=1);
-
-    //! read tags and labels from minc tag file
-    void read_tags(tag_points& tags, std::vector<float>& labels, const char * file, int vol=1);
-
-    //! read tags and labels from minc tag file
-    void read_tags(tag_points& tags, std::vector<double>& labels, const char * file, int vol=1);
-
-    //! read tags and labels from minc tag file
-    void read_tags(tag_points& tag1, tag_points& tag2,std::vector<double>& labels, const char * file);
-
-
-    //! read array from the text file
-    void load_parameters(const char *file,itk::Array<double> &param);
-    //! save array to the text file
-    void save_parameters(const char *file,const itk::Array<double> &param);
-    //! read array from the text file, up to components
-    void load_parameters(const char *file,itk::Array<double> &param,size_t no);
-    //! make sure that all voxels are 0 or 1
-    void normalize_mask(mask3d::Pointer img);
-
-    void read_linear_xfm(const char *xfm,itk::Matrix<double,3,3>& rot, itk::Vector<double,3>& tran );
-    void read_linear_xfm(const char *xfm,itk::Matrix<double,2,2>& rot, itk::Vector<double,2>& tran );
-
-    void write_linear_xfm(const char *xfm,const itk::Matrix<double,3,3>& rot,const itk::Vector<double,3>& tran);
-    void write_linear_xfm(const char *xfm,const itk::Matrix<double,2,2>& rot,const itk::Vector<double,2>& tran);
-
-    void write_combined_xfm(const char *xfm,const itk::Matrix<double,3,3>& rot,const itk::Vector<double,3>& tran, const char *grid );
-    void write_combined_xfm(const char *xfm,const itk::Matrix<double,2,2>& rot,const itk::Vector<double,2>& tran, const char *grid );
-
-    void write_combined_xfm(const char *xfm,const char *grid, const itk::Matrix<double,3,3>& rot,const itk::Vector<double,3>& tran );
-    void write_combined_xfm(const char *xfm,const char *grid, const itk::Matrix<double,2,2>& rot,const itk::Vector<double,2>& tran );
-
-    void write_nonlinear_xfm(const char *xfm,const char *grid);
 
     //! minc4itk compatibility function
     template <class T> void  load_minc(const char *file,typename T::Pointer& img)
@@ -387,43 +311,5 @@ namespace minc
   {
     img=load_minc<typename T::ObjectType>(file);
   }
-  
-  
-  
-  template<class T> void setup_itk_image(const minc_1_base& minc_rw, T& img)
-  {
-    itk::Vector< unsigned int,3> dims;
-    itk::Vector< double,3> spacing;
-    itk::Vector< double,3> origin;
-    itk::Vector< double,3> start;
-    itk::Matrix< double, 3, 3> dir_cos;
-    dir_cos.SetIdentity();
-    //std::cout<<"setup_itk_image"<<std::endl;
-    for(int i=0;i<3;i++)
-    {
-      dims[i]=minc_rw.ndim(i+1);
-      spacing[i]=minc_rw.nspacing(i+1);
-      start[i]=minc_rw.nstart(i+1);
-      if(minc_rw.have_dir_cos(i+1))
-      {
-        for(int j=0;j<3;j++)
-          dir_cos[j][i]=minc_rw.ndir_cos(i+1,j); //TODO: check transpose?
-      }
-      //std::cout<<start[i]<<"\t";
-    }
-    //std::cout<<std::endl;
-    origin=dir_cos*start;
-    allocate_image3d<typename T::ObjectType>(img,dims,spacing,origin);
-    img->SetDirection(dir_cos);
-  }
-  
-  template<class T> void imitate_minc (const char *path, T& img)
-  {
-    minc_1_reader rdr;
-    rdr.open(path,true,true);
-    setup_itk_image<T>(rdr,img);
-  }
-  
-  
 };//minc
 #endif //_MINC_WRAPPERS_H_
