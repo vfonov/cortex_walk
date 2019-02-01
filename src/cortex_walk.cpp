@@ -100,7 +100,7 @@ int main (int argc, char **argv)
     {"distance", required_argument, 0, 'd'},
     {"distfile", required_argument, 0, 'D'},
     {"threshold",required_argument,0, 't'},
-    {"step",     required_argument,0, 's'},
+    {"help",     no_argument,0, 'h'},
     {0, 0, 0, 0}
   };
   
@@ -108,7 +108,7 @@ int main (int argc, char **argv)
     /* getopt_long stores the option index here. */
     int option_index = 0;
 
-    int c = getopt_long (argc, argv, "vd:t:s:D:", long_options, &option_index);
+    int c = getopt_long (argc, argv, "hvd:t:s:D:", long_options, &option_index);
 
     /* Detect the end of the options. */
     if (c == -1) break;
@@ -135,6 +135,9 @@ int main (int argc, char **argv)
         return 0;
       case '?':
         /* getopt_long already printed an error message. */
+      case 'h':
+         show_usage (argv[0]);
+         return 0;
       default:
         show_usage (argv[0]);
         return 1;
